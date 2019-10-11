@@ -1,0 +1,7 @@
+---
+
+- hosts: aio
+  become: yes
+  roles:
+    - devstack-aio
+ 
