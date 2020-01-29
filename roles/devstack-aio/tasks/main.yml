@@ -25,6 +25,27 @@
     state: present
     sysctl_set: true
 
+
+- name: Update apt cache and upgrade packages
+  apt:
+    upgrade: yes
+    update_cache: yes
+
+- name: Remove conflicting package - httplib2
+  apt:
+    name: python3-httplib2
+    state: absent
+
+- name: Remove conflicting package - python3-pyasn1
+  apt:
+    name: python3-pyasn1
+    state: absent
+
+- name: Remove conflicting package - python3-pyasn1-modules
+  apt:
+    name: python3-pyasn1-modules
+    state: absent
+
 - name: Install python-apt to help ansible to install other packages
   package:
     name: python-apt
@@ -58,6 +79,7 @@
       copy:
         dest: "~/"
         src: "create_bandwidth_port.sh"
+        mode: "ugo+x"
 
     - name: Unstack
       command: "./unstack.sh"
@@ -75,6 +97,10 @@
         chdir: "/home/stack/devstack"
 
     # run create_bandwidth_port
+    - name: create bandwidth ports
+      command: "create_bandwidth_port.sh"
+      args:
+        chdir: "/home/stack/"
 
   become: yes
   become_user: stack
