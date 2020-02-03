@@ -31,24 +31,23 @@
     upgrade: yes
     update_cache: yes
 
-- name: Remove conflicting package - httplib2
+- name: Remove conflicting package
   apt:
-    name: python3-httplib2
+    name: "{{ item }}"
     state: absent
-
-- name: Remove conflicting package - python3-pyasn1
-  apt:
-    name: python3-pyasn1
-    state: absent
-
-- name: Remove conflicting package - python3-pyasn1-modules
-  apt:
-    name: python3-pyasn1-modules
-    state: absent
+  with_items:
+  - python3-httplib2
+  - python3-pyasn1
+  - python3-pyasn1-modules
 
 - name: Install python-apt to help ansible to install other packages
   package:
     name: python-apt
+    state: present
+
+- name: Install xdot for osc_provider_tree visualization
+  package:
+    name: xdot
     state: present
 
 - name: Install ovs
@@ -96,11 +95,22 @@
       args:
         chdir: "/home/stack/devstack"
 
-    # run create_bandwidth_port
     - name: create bandwidth ports
-      command: "create_bandwidth_port.sh"
+      shell: ". ~/devstack/openrc admin admin && ~/create_bandwidth_port.sh"
       args:
-        chdir: "/home/stack/"
+        executable: /bin/bash
+
+    - name: setup git
+      git_config:
+        name: user.email
+        scope: global
+        value: "balazs.gibizer@est.tech"
+
+    - name: setup git
+      git_config:
+        name: user.name
+        scope: global
+        value: "Balazs Gibizer"
 
   become: yes
   become_user: stack
