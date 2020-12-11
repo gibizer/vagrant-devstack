@@ -16,7 +16,7 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
     libvirt.default_prefix = "devstack"
   end
 
-  config.vm.box = "generic/ubuntu1804"
+  config.vm.box = "generic/ubuntu2004"
   config.vm.synced_folder ".", "/vagrant", disabled: true
 
   hostnames = ['aio']

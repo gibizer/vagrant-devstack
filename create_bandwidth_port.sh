@@ -36,3 +36,15 @@ openstack port create port-direct-qos \
 --vnic-type direct \
 --qos-policy qp0 \
 ##
+openstack network qos policy create qp1
+openstack network qos rule create qp1 \
+--type minimum-bandwidth \
+--min-kbps 2000 \
+--egress \
+##
+openstack network qos rule create qp1 \
+--type minimum-bandwidth \
+--min-kbps 2000 \
+--ingress \
+##
+
