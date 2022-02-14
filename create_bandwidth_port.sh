@@ -47,4 +47,3 @@ openstack network qos rule create qp1 \
 --min-kbps 2000 \
 --ingress \
 ##
-
