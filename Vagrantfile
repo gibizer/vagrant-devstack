@@ -6,7 +6,7 @@ VAGRANTFILE_API_VERSION = "2"
 
 Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
 
-  config.hostmanager.enabled = true
+#   config.hostmanager.enabled = true
 
   config.vm.provider :libvirt do |libvirt|
     libvirt.memory = 8192

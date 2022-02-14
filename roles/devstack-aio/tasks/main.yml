@@ -96,7 +96,7 @@
         chdir: "/home/stack/devstack"
 
     - name: create bandwidth ports
-      shell: ". ~/devstack/openrc admin admin && ~/create_bandwidth_port.sh"
+      shell: ". ~/devstack/openrc admin admin # && ~/create_bandwidth_port.sh"
       args:
         executable: /bin/bash
 
