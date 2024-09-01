@@ -1,0 +1,114 @@
+---
+
+- name: Define domain
+  ansible.builtin.set_fact:
+    # NOTE(gibi): The Vagrantfile defines a devstack prefix for each VM
+    domain: devstack{{ ansible_hostname }}
+
+- name: Add igb NIC to the VM definition
+  delegate_to: localhost
+  block:
+    - name: Read Domain XML
+      ansible.builtin.command: virsh dumpxml --inactive {{ domain }}
+      register: vm_xml
+      changed_when: true
+
+    - name: Check if igb NIC is already present
+      community.general.xml:
+        xmlstring: "{{ vm_xml.stdout }}"
+        xpath: "/domain/devices/interface/model[@type='igb']"
+        count: true
+      register: vm_igb_interface
+
+    - name: Add igb NIC
+      when: "vm_igb_interface.count == 0"
+      # NOTE(gibi): Cannot add it live as libvirt fails with not enaough PCI slot
+      ansible.builtin.command: virsh attach-interface --type network --source vagrant-libvirt --model igb --config {{ domain }}
+      changed_when: true
+      notify:
+        - Restart VM
+
+    - name: Re-read Domain XML
+      ansible.builtin.command: virsh dumpxml --inactive {{ domain }}
+      register: vm_xml
+      changed_when: true
+
+    - name: Write out temp domain xml
+      ansible.builtin.copy:
+        dest: "/tmp/{{ domain }}.xml"
+        content: "{{ vm_xml.stdout }}"
+        owner: root
+        group: root
+        mode: '0644'
+
+    - name: Check if IOMM device is already present
+      community.general.xml:
+        path: "/tmp/{{ domain }}.xml"
+        xpath: "/domain/devices/iommu/driver[@intremap='on' and @iotlb='on']"
+        count: true
+      register: vm_iommu
+
+    - name: Add IOMMU device
+      when: "vm_iommu.count == 0"
+      community.general.xml:
+        path: "/tmp/{{ domain }}.xml"
+        xpath: "/domain/devices"
+        input_type: xml
+        add_children:
+          - "<iommu model='intel'><driver intremap='on' iotlb='on'/></iommu>"
+      notify:
+        - Restart VM
+
+    # NOTE(gibi): intremap only works with split APIC
+    - name: Switch to split APIC
+      community.general.xml:
+        path: "/tmp/{{ domain }}.xml"
+        xpath: "/domain/features/ioapic"
+        attribute: "driver"
+        value: "qemu"
+      register: vm_xml
+      notify:
+        - Restart VM
+
+    - name: Redefine Domain
+      ansible.builtin.command: virsh define "/tmp/{{ domain }}.xml"
+      changed_when: true
+
+- name: Enable IOMMU
+  block:
+    - name: Enable IOMMU
+      ansible.builtin.lineinfile:
+        path: /etc/default/grub
+        regexp: '^GRUB_CMDLINE_LINUX_DEFAULT="((?:(?!intel_iommu=on).)*?)"$'
+        line: 'GRUB_CMDLINE_LINUX_DEFAULT="\1 intel_iommu=on"'
+        backup: true
+        backrefs: true
+      notify:
+        - Update grub
+        - Restart VM
+
+    - name: Enable IOMMU
+      ansible.builtin.lineinfile:
+        path: /etc/default/grub
+        regexp: '^GRUB_CMDLINE_LINUX="((?:(?!intel_iommu=on).)*?)"$'
+        line: 'GRUB_CMDLINE_LINUX="\1 intel_iommu=on"'
+        backup: true
+        backrefs: true
+      notify:
+        - Update grub
+        - Restart VM
+
+- name: Persistently create VFs
+  ansible.builtin.copy:
+    dest: /etc/modprobe.d/igb.conf
+    content: |
+      options igb max_vfs=4
+    owner: root
+    group: root
+    mode: '0644'
+  notify:
+    - Update initramfs
+    - Restart VM
+
+- name: Flush handlers
+  ansible.builtin.meta: flush_handlers

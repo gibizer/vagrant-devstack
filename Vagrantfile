@@ -14,9 +14,10 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
     libvirt.cpu_mode = "host-passthrough"
     libvirt.machine_virtual_size = 30
     libvirt.default_prefix = "devstack"
+    libvirt.machine_type = "q35"
   end
 
-  config.vm.box = "generic/ubuntu2004"
+  config.vm.box = "cloud-image/ubuntu-24.04"
   config.vm.synced_folder ".", "/vagrant", disabled: true
 
   hostnames = ['aio']
@@ -25,19 +26,12 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
     system.vm.host_name = "#{name}"
     system.vm.provision "ansible" do |ansible|
         ansible.playbook = "#{name}.yml"
-        ansible.inventory_path = "inventories/vagrant"
         ansible.limit = "all" # run ansible in parallel for all machines
         ansible.verbose = "vv"
       end
     end
   end
 
-  config.vm.define :aio do |aio|
-    aio.vm.network :private_network,
-                   :libvirt__network_name => 'mgmt',
-                   :libvirt__dhcp_enabled => false,
-                   :ip => "192.168.111.3"
-  end
 
 end
 

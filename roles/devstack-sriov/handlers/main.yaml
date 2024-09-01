@@ -1,0 +1,12 @@
+---
+- name: Update grub
+  ansible.builtin.command: /usr/sbin/update-grub
+  changed_when: true
+
+- name: Update initramfs
+  ansible.builtin.command: /usr/sbin/update-initramfs -u -k all
+  changed_when: true
+
+- name: Restart VM
+  ansible.builtin.include_tasks:
+    roles/devstack-sriov/tasks/restart_vm.yaml

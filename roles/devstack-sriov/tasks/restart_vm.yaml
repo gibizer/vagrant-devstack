@@ -1,0 +1,17 @@
+---
+- name: Stop VM
+  community.general.shutdown:
+
+- name: Wait for shutdown
+  ansible.builtin.pause:
+    seconds: 5
+
+- name: Start VM
+  delegate_to: localhost
+  ansible.builtin.command: virsh start {{ domain }}
+  changed_when: true
+
+- name: Wait for VM to start
+  ansible.builtin.wait_for_connection:
+    delay: 5
+    timeout: 30

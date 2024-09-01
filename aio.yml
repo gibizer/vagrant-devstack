@@ -3,5 +3,6 @@
 - hosts: aio
   become: yes
   roles:
+    - devstack-sriov
     - devstack-aio
  
