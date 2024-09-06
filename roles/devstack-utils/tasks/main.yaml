@@ -1,0 +1,73 @@
+---
+- name: Ensure tmp dir exists
+  delegate_to: localhost
+  ansible.builtin.file:
+    path: "tmp"
+    owner: gibi
+    group: gibi
+    mode: '0755'
+    state: directory
+
+- name: Download ubuntu cloud image
+  delegate_to: localhost
+  ansible.builtin.get_url:
+    url: https://cloud-images.ubuntu.com/noble/current/noble-server-cloudimg-amd64.img
+    dest: "tmp/ubuntu-2024.img"
+    owner: gibi
+    group: gibi
+    mode: '0644'
+  register: downloaded
+
+- name: Inject root password
+  delegate_to: localhost
+  when: "downloaded.changed" # noqa: no-handler
+  ansible.builtin.command: virt-customize -v -x --no-network -a "tmp/ubuntu-2024.img" --root-password password:root
+  changed_when: true
+
+- name: Copy ubuntu cloud image into devstack
+  become: true
+  become_user: stack
+  ansible.builtin.copy:
+    src: "tmp/ubuntu-2024.img"
+    dest: "/tmp/ubuntu-2024.img"
+    owner: stack
+    group: stack
+    mode: '0644'
+
+- name: Upload ubuntu cloud image to glance
+  become: true
+  become_user: stack
+  ansible.builtin.shell:
+    cmd: |
+      set -o pipefail
+      . /home/stack/devstack/openrc admin admin
+      set -x pipefail
+      if openstack image list | grep ubuntu
+      then
+        exit 0
+      else
+        openstack image create \
+        --container-format bare \
+        --disk-format qcow2 \
+        --file "/tmp/ubuntu-2024.img" \
+        ubuntu-2024
+      fi
+    executable: /bin/bash
+  changed_when: true
+
+
+- name: Create PCI passthrough flavor
+  become: true
+  become_user: stack
+  ansible.builtin.shell:
+    cmd: |
+      set -o pipefail
+      . /home/stack/devstack/openrc admin admin
+      if openstack flavor list | grep m1.pci1
+      then
+        exit 0
+      else
+        openstack flavor create --vcpus 1 --ram 2048 --disk 4 --property "pci_passthrough:alias"="nic:1" m1.pci1
+      fi
+    executable: /bin/bash
+  changed_when: true

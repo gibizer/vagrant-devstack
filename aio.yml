@@ -6,4 +6,4 @@
   roles:
     - devstack-sriov
     - devstack-aio
- 
+    - devstack-utils
