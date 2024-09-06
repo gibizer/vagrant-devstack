@@ -2,24 +2,27 @@
 # TODO:
 # * split tasks to host setup, devstack setup(per version different config)
 - name: Create stack user
-  user:
+  ansible.builtin.user:
     name: stack
     shell: "/bin/bash"
 
 - name: Set authorized key for stack
-  authorized_key:
+  ansible.posix.authorized_key:
     user: stack
     state: present
     key: "{{ lookup('file', '/home/gibi/.ssh/id_ed25519.pub') }}"
 
 - name: Allow stack to have passwordless sudo
-  copy:
+  ansible.builtin.copy:
     dest: "/etc/sudoers.d/stack"
     content: |
       stack ALL=(ALL) NOPASSWD: ALL
+    owner: root
+    group: root
+    mode: '0644'
 
 - name: Ensure ipv6 is enabled
-  sysctl:
+  ansible.posix.sysctl:
     name: net.ipv6.conf.all.disable_ipv6
     value: 0
     state: present
@@ -27,57 +30,60 @@
 
 
 - name: Update apt cache and upgrade packages
-  apt:
-    upgrade: yes
-    update_cache: yes
+  ansible.builtin.apt:
+    upgrade: true
+    update_cache: true
 
 - name: Remove conflicting package
   when: false
-  apt:
+  ansible.builtin.apt:
     name: "{{ item }}"
     state: absent
   with_items:
-  - python3-httplib2
-  - python3-pyasn1
-  - python3-pyasn1-modules
+    - python3-httplib2
+    - python3-pyasn1
+    - python3-pyasn1-modules
 
 - name: Install python-apt to help ansible to install other packages
   when: false
-  package:
+  ansible.builtin.package:
     name: python-apt
     state: present
 
 - name: Install xdot for osc_provider_tree visualization
-  package:
+  ansible.builtin.package:
     name: xdot
     state: present
 
 - name: Install ovs
-  package:
+  ansible.builtin.package:
     name: openvswitch-switch
     state: present
 
 - name: Ensure br-test for bandwidth config
-  openvswitch_bridge:
+  openvswitch.openvswitch.openvswitch_bridge:
     bridge: br-test
     state: present
 
 
-- block:  # tasks with the stack user
-
+- name: Deploy devstack as stack user
+  become: true
+  become_user: stack
+  block:
     - name: Clone devstack repo
-      git:
+      ansible.builtin.git:
         repo: https://opendev.org/openstack/devstack.git
         version: master
         dest: "~/devstack"
 
     - name: Copy local.conf
-      copy:
+      ansible.builtin.copy:
         dest: "~/devstack"
         src: "local.conf"
+        mode: '0644'
 
     - name: Copy bandwidth port create script
-      copy:
+      ansible.builtin.copy:
         dest: "~/"
         src: "create_bandwidth_port.sh"
         mode: "ugo+x"
@@ -88,34 +94,31 @@
           #        chdir: "/home/stack/devstack"
 
     - name: Clean
-      command: "./clean.sh"
+      ansible.builtin.command: "./clean.sh"
       args:
         chdir: "/home/stack/devstack"
+      changed_when: true
 
     - name: Stack
-      command: "./stack.sh"
+      ansible.builtin.command: "./stack.sh"
       args:
         chdir: "/home/stack/devstack"
+      changed_when: true
 
-    - name: create bandwidth ports
-      shell: ". ~/devstack/openrc admin admin # && ~/create_bandwidth_port.sh"
+    - name: Create bandwidth ports
+      ansible.builtin.shell: ". ~/devstack/openrc admin admin # && ~/create_bandwidth_port.sh"
       args:
         executable: /bin/bash
+      changed_when: true
 
-    - name: setup git
-      git_config:
+    - name: Setup git email
+      community.general.git_config:
         name: user.email
         scope: global
         value: "gibi@redhat.com"
 
-    - name: setup git
-      git_config:
+    - name: Setup git name
+      community.general.git_config:
         name: user.name
         scope: global
         value: "Balazs Gibizer"
-
-  become: yes
-  become_user: stack
-
-
-
