@@ -9,7 +9,8 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
 #   config.hostmanager.enabled = true
 
   config.vm.provider :libvirt do |libvirt|
-    libvirt.memory = 8192
+    libvirt.cpus = 4
+    libvirt.memory = 12288
     libvirt.nested = true
     libvirt.cpu_mode = "host-passthrough"
     libvirt.machine_virtual_size = 30
