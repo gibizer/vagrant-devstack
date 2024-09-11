@@ -20,6 +20,15 @@
         count: true
       register: vm_igb_interface
 
+    # NOTE(gibi): it is a hack to ensure we have to igb NICs in the VM
+    - name: Add igb NIC
+      when: "vm_igb_interface.count < 2"
+      # NOTE(gibi): Cannot add it live as libvirt fails with not enaough PCI slot
+      ansible.builtin.command: virsh attach-interface --type network --source vagrant-libvirt --model igb --config {{ domain }}
+      changed_when: true
+      notify:
+        - Restart VM
+
     - name: Add igb NIC
       when: "vm_igb_interface.count == 0"
       # NOTE(gibi): Cannot add it live as libvirt fails with not enaough PCI slot
@@ -109,6 +118,24 @@
   notify:
     - Update initramfs
     - Restart VM
+
+- name: Configure dhcp for the PFs
+  vars:
+    content:
+      network:
+        version: 2
+        renderer: networkd
+        ethernets:
+          enp5s0:
+            dhcp4: true
+          enp6s0:
+            dhcp4: true
+  ansible.builtin.copy:
+    dest: /etc/netplan/sriov.yaml
+    content: "{{ content | to_json }}"
+    owner: root
+    group: root
+    mode: '0600'
 
 - name: Flush handlers
   ansible.builtin.meta: flush_handlers

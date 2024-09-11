@@ -71,3 +71,40 @@
       fi
     executable: /bin/bash
   changed_when: true
+
+- name: Create direct port
+  become: true
+  become_user: stack
+  ansible.builtin.shell:
+    cmd: |
+      set -o pipefail
+      . /home/stack/devstack/openrc admin admin
+
+      if openstack network list | grep net0
+      then
+        openstack network show net0
+      else
+        openstack network create net0 \
+          --provider-network-type vlan \
+          --provider-physical-network physnet2 \
+          --provider-segment 100
+      fi
+
+      if openstack subnet list | grep subnet0
+      then
+        openstack subnet show subnet0
+      else
+        openstack subnet create subnet0 \
+          --network net0 \
+          --subnet-range 10.0.4.0/24
+      fi
+
+      if openstack port list | grep port-direct
+      then
+        openstack port show port-direct
+      else
+        openstack port create --network net0 --vnic-type direct port-direct
+      fi
+
+    executable: /bin/bash
+  changed_when: true
