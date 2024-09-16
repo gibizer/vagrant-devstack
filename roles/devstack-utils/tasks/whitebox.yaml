@@ -1,0 +1,74 @@
+---
+
+- name: Allow the stack user to ssh back to the itself
+  become: true
+  become_user: stack
+  block:
+    - name: Generate ssh keypair for stack
+      community.crypto.openssh_keypair:
+        path: /home/stack/.ssh/id_ed25519
+        owner: stack
+        group: stack
+        type: ed25519
+      register: ssh_key
+
+    - name: Add the pub key to authorized_keys
+      ansible.posix.authorized_key:
+        user: stack
+        state: present
+        key: "{{ ssh_key.public_key }}"
+
+- name: Write compute_nodes.yaml
+  become: true
+  become_user: stack
+  vars:
+    content:
+      aio:
+        services:
+          libvirt:
+            start_command: 'systemctl start libvirtd'
+            stop_command: 'systemctl stop libvirtd'
+            mask_command: 'systemctl mask libvirtd'
+            unmask_command: 'systemctl unmask libvirtd'
+          nova-compute:
+            config_path: '/etc/nova/nova-cpu.conf'
+            start_command: 'systemctl start devstack@n-cpu'
+            stop_command: 'systemctl stop devstack@n-cpu'
+  ansible.builtin.copy:
+    dest: /home/stack/compute_nodes.yaml
+    content: "{{ content | to_json }}"
+    owner: stack
+    group: stack
+    mode: '0644'
+
+- name: Install whitebox plugin to tempest venv
+  ansible.builtin.pip:
+    name: file:///opt/stack/whitebox-tempest-plugin
+    virtualenv: /opt/stack/tempest/.tox/tempest/
+
+- name: Amend tempest config with whitebox config
+  community.general.ini_file:
+    path: /opt/stack/tempest/etc/tempest.conf
+    section: "{{ item.section }}"
+    option: "{{ item.option }}"
+    value: "{{ item.value }}"
+    mode: '0666'
+  loop:
+    - { section: 'whitebox',
+        option: 'nodes_yaml', value: '/home/stack/compute_nodes.yaml'}
+    - { section: 'whitebox',
+        option: 'ctlplane_ssh_private_key_path', value: '/home/stack/.ssh/id_ed25519'}
+    - { section: 'whitebox',
+        option: 'ctlplane_ssh_username', value: 'stack'}
+    - { section: 'whitebox-hardware',
+        option: 'sriov_physnet', value: 'physnet2'}
+    - { section: 'whitebox-hardware',
+        option: 'sriov_vlan_id', value: '101'}
+    - { section: 'whitebox-hardware',
+        option: 'sriov_vnic_type', value: 'direct'}
+    - { section: 'whitebox-hardware',
+        option: 'sriov_nic_vendor_id', value: '8086'}
+    - { section: 'whitebox-hardware',
+        option: 'sriov_vf_product_id', value: '10ca'}
+    - { section: 'whitebox-hardware',
+        option: 'physnet_numa_affinity', value: '0'}
