@@ -1,9 +1,0 @@
----
-
-- name: Deploy aio
-  hosts: aio
-  become: true
-  roles:
-    - devstack-sriov
-    - devstack-aio
-    - devstack-utils

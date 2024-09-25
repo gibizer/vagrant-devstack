@@ -1,0 +1,29 @@
+---
+- name: Deploy devstack as stack user
+  become: true
+  become_user: stack
+  block:
+    - name: Clone devstack repo
+      ansible.builtin.git:
+        repo: https://opendev.org/openstack/devstack.git
+        version: master
+        dest: "~/devstack"
+
+    - name: Copy local.conf into devstack dir
+      ansible.builtin.copy:
+        dest: "~/devstack/local.conf"
+        src: "~/local.conf"
+        remote_src: true
+        mode: '0644'
+
+    - name: Clean
+      ansible.builtin.command: "./clean.sh"
+      args:
+        chdir: "/home/stack/devstack"
+      changed_when: true
+
+    - name: Stack
+      ansible.builtin.command: "./stack.sh"
+      args:
+        chdir: "/home/stack/devstack"
+      changed_when: true

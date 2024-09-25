@@ -1,0 +1,23 @@
+---
+- name: Create stack user
+  become: true
+  ansible.builtin.user:
+    name: stack
+    shell: "/bin/bash"
+
+- name: Set authorized key for stack
+  become: true
+  ansible.posix.authorized_key:
+    user: stack
+    state: present
+    key: "{{ lookup('file', '{{ ssh_access_pub_key }}') }}"
+
+- name: Allow stack to have passwordless sudo
+  become: true
+  ansible.builtin.copy:
+    dest: "/etc/sudoers.d/stack"
+    content: |
+      stack ALL=(ALL) NOPASSWD: ALL
+    owner: root
+    group: root
+    mode: '0644'

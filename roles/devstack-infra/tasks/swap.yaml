@@ -1,0 +1,36 @@
+---
+- name: Check if swap enabled
+  become: true
+  ansible.builtin.stat:
+    path: /swapfile
+  register: swap
+
+- name: Add swap
+  when: not swap.stat.exists
+  become: true
+  block:
+    - name: Allocate swapfile
+      ansible.builtin.command: fallocate -l {{ swap_size }} /swapfile
+      changed_when: true
+
+    - name: Set permission
+      ansible.builtin.file:
+        path: /swapfile
+        owner: root
+        group: root
+        mode: '0600'
+        state: file
+
+    - name: Format
+      ansible.builtin.command: mkswap /swapfile
+      changed_when: true
+
+    - name: Add to fstab
+      ansible.builtin.lineinfile:
+        dest: /etc/fstab
+        regexp: "/swapfile"
+        line: "/swapfile none swap sw 0 0"
+
+    - name: Enable
+      ansible.builtin.command: swapon -a
+      changed_when: true

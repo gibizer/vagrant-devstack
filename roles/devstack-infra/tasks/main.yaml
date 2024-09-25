@@ -1,0 +1,26 @@
+---
+- name: Configure stack user
+  ansible.builtin.include_tasks: user.yaml
+
+- name: Enable cross compute ssh
+  ansible.builtin.include_tasks: cross_compute_ssh.yaml
+
+- name: Enable swap
+  ansible.builtin.include_tasks: swap.yaml
+
+- name: Install packages
+  ansible.builtin.include_tasks: packages.yaml
+
+- name: Ensure ipv6 is enabled
+  become: true
+  ansible.posix.sysctl:
+    name: net.ipv6.conf.all.disable_ipv6
+    value: 0
+    state: present
+    sysctl_set: true
+
+- name: Ensure br-test for bandwidth config
+  become: true
+  openvswitch.openvswitch.openvswitch_bridge:
+    bridge: br-test
+    state: present

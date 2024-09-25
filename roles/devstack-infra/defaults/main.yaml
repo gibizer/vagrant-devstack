@@ -1,0 +1,8 @@
+---
+local_tmp_dir: "tmp"
+ssh_access_pub_key: "/home/gibi/.ssh/id_ed25519.pub"
+swap_size: "2G"
+packages_present:
+  - xdot
+  - openvswitch-switch
+packages_absent: []

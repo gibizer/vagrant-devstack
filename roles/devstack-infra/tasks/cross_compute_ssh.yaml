@@ -1,0 +1,80 @@
+---
+- name: Ensure tmp dir exists
+  delegate_to: localhost
+  ansible.builtin.file:
+    path: "{{ local_tmp_dir }}"
+    mode: '0755'
+    state: directory
+
+- name: Create ssh keypair to cross compute connectivity
+  delegate_to: localhost
+  community.crypto.openssh_keypair:
+    path: "{{ local_tmp_dir }}/id_ed25519"
+    type: ed25519
+  register: cross_ssh_key
+
+- name: Build hosts file
+  become: true
+  ansible.builtin.lineinfile:
+    dest: "/etc/hosts"
+    regexp: '.*{{ item }}$'
+    line: "{{ hostvars[item].ansible_default_ipv4.address }} {{ item }}"
+    state: present
+  when: hostvars[item].ansible_default_ipv4.address is defined
+  with_items: "{{ groups['all'] }}"
+
+# stack user is used for cold migration
+- name: Distribute cross compute connectivity ssh private key
+  become: true
+  ansible.builtin.copy:
+    src: "{{ local_tmp_dir }}/id_ed25519"
+    dest: "/home/stack/.ssh/"
+    owner: stack
+    group: stack
+    mode: '0600'
+
+- name: Authorize cross compute connectivity ssh public key
+  become: true
+  ansible.posix.authorized_key:
+    user: stack
+    state: present
+    key: "{{ cross_ssh_key.public_key }}"
+
+- name: Disable ssh host key checking
+  become: true
+  ansible.builtin.copy:
+    content: |
+      Host *
+        StrictHostKeyChecking no
+    dest: /home/stack/.ssh/config
+    owner: stack
+    group: stack
+    mode: '0644'
+
+# root is used for live migration by libvirt
+- name: Distribute cross compute connectivity ssh private key for root
+  become: true
+  ansible.builtin.copy:
+    src: "{{ local_tmp_dir }}/id_ed25519"
+    dest: "/root/.ssh/"
+    owner: root
+    group: root
+    mode: '0600'
+
+- name: Authorize cross compute connectivity ssh public key for root
+  become: true
+  ansible.posix.authorized_key:
+    user: root
+    state: present
+    key: "{{ cross_ssh_key.public_key }}"
+
+- name: Disable ssh host key checking for root
+  become: true
+  ansible.builtin.copy:
+    content: |
+      Host *
+        StrictHostKeyChecking no
+    dest: /root/.ssh/config
+    owner: root
+    group: root
+    mode: '0644'

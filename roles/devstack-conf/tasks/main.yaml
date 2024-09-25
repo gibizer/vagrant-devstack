@@ -1,0 +1,17 @@
+---
+- name: Copy local.conf
+  become: true
+  become_user: stack
+  ansible.builtin.copy:
+    dest: "~/local.conf"
+    src: "{{ devstack_local_conf }}"
+    mode: '0644'
+
+- name: Set SERVICE_HOST in local.conf on computes
+  become: true
+  become_user: stack
+  when: inventory_hostname in groups['computes']
+  ansible.builtin.lineinfile:
+    path: "~/local.conf"
+    regexp: '^SERVICE_HOST='
+    line: "SERVICE_HOST={{ hostvars['aio'].ansible_default_ipv4.address }}"

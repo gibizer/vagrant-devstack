@@ -1,0 +1,29 @@
+---
+- name: Prepare infra
+  hosts: all
+  roles:
+    - role: devstack-infra
+      ssh_access_pub_key: "/home/gibi/.ssh/id_ed25519.pub"
+    - devstack-sriov
+
+- name: Generate local.conf
+  hosts: all
+  roles:
+    - devstack-conf
+
+- name: Deploy devstack on controller
+  hosts: aios
+  roles:
+    - devstack
+
+# NOTE(gibi): we need to order the deploys so
+# computes come up after controllers
+- name: Deploy devstack on computes
+  hosts: computes
+  roles:
+    - devstack
+
+- name: Post deploy setups
+  hosts: aios
+  roles:
+    - devstack-utils

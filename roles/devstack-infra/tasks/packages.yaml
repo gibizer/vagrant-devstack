@@ -1,0 +1,20 @@
+---
+- name: Update apt cache and upgrade packages
+  become: true
+  ansible.builtin.apt:
+    upgrade: true
+    update_cache: true
+
+- name: Install packages
+  become: true
+  ansible.builtin.apt:
+    name: "{{ item }}"
+    state: "present"
+  with_items: "{{ packages_present }}"
+
+- name: Remove packages
+  become: true
+  ansible.builtin.apt:
+    name: "{{ item }}"
+    state: "present"
+  with_items: "{{ packages_absent }}"

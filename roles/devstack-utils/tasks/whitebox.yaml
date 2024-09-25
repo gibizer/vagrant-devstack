@@ -1,52 +1,43 @@
 ---
 
-- name: Allow the stack user to ssh back to the itself
-  become: true
-  become_user: stack
-  block:
-    - name: Generate ssh keypair for stack
-      community.crypto.openssh_keypair:
-        path: /home/stack/.ssh/id_ed25519
-        owner: stack
-        group: stack
-        type: ed25519
-      register: ssh_key
-
-    - name: Add the pub key to authorized_keys
-      ansible.posix.authorized_key:
-        user: stack
-        state: present
-        key: "{{ ssh_key.public_key }}"
+- name: Generate compute_nodes.yaml
+  delegate_to: localhost
+  vars:
+    template:
+      services:
+        libvirt:
+          start_command: 'systemctl start libvirtd'
+          stop_command: 'systemctl stop libvirtd'
+          mask_command: 'systemctl mask libvirtd'
+          unmask_command: 'systemctl unmask libvirtd'
+        nova-compute:
+          config_path: '/etc/nova/nova-cpu.conf'
+          start_command: 'systemctl start devstack@n-cpu'
+          stop_command: 'systemctl stop devstack@n-cpu'
+  ansible.builtin.set_fact:
+    compute_nodes: "{{ (compute_nodes | default({})) | combine({item: template}) }}"
+  with_items: "{{ groups['all'] }}"
 
 - name: Write compute_nodes.yaml
   become: true
   become_user: stack
-  vars:
-    content:
-      aio:
-        services:
-          libvirt:
-            start_command: 'systemctl start libvirtd'
-            stop_command: 'systemctl stop libvirtd'
-            mask_command: 'systemctl mask libvirtd'
-            unmask_command: 'systemctl unmask libvirtd'
-          nova-compute:
-            config_path: '/etc/nova/nova-cpu.conf'
-            start_command: 'systemctl start devstack@n-cpu'
-            stop_command: 'systemctl stop devstack@n-cpu'
   ansible.builtin.copy:
     dest: /home/stack/compute_nodes.yaml
-    content: "{{ content | to_json }}"
+    content: "{{ compute_nodes | to_json }}"
     owner: stack
     group: stack
     mode: '0644'
 
 - name: Install whitebox plugin to tempest venv
+  become: true
+  become_user: stack
   ansible.builtin.pip:
     name: file:///opt/stack/whitebox-tempest-plugin
     virtualenv: /opt/stack/tempest/.tox/tempest/
 
 - name: Amend tempest config with whitebox config
+  become: true
+  become_user: stack
   community.general.ini_file:
     path: /opt/stack/tempest/etc/tempest.conf
     section: "{{ item.section }}"
@@ -54,6 +45,8 @@
     value: "{{ item.value }}"
     mode: '0666'
   loop:
+    - { section: 'compute',
+        option: 'min_compute_nodes', value: '{{ groups["all"] | length }}'}
     - { section: 'whitebox',
         option: 'nodes_yaml', value: '/home/stack/compute_nodes.yaml'}
     - { section: 'whitebox',

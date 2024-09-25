@@ -1,5 +1,6 @@
 ---
 - name: Stop VM
+  become: true
   community.general.shutdown:
 
 - name: Wait for shutdown

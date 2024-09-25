@@ -1,0 +1,2 @@
+---
+devstack_local_conf: "local.conf"
