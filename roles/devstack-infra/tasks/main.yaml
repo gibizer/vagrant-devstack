@@ -24,3 +24,14 @@
   openvswitch.openvswitch.openvswitch_bridge:
     bridge: br-test
     state: present
+
+- name: Create /etc/pip.conf
+  become: true
+  when: pip_index_url is defined
+  ansible.builtin.copy:
+    content: |
+      [global]
+      index-url = {{ pip_index_url }}
+      trusted-host = {{ pip_trusted_host }}
+    dest: /etc/pip.conf
+    mode: '0644'
