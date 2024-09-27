@@ -21,3 +21,13 @@
     owner: root
     group: root
     mode: '0644'
+
+  # NOTE(gibi): it would be better to use the idmap tag for virtiofs in the
+  # libvirt XML but vagrant-libvirt provider does not expose it yet
+- name: Mark /vagrant/gitcache as safe git directory
+  become: true
+  become_user: stack
+  community.general.git_config:
+    name: safe.directory
+    value: "*"
+    scope: global

@@ -1,0 +1,25 @@
+---
+cached_git_repo_base: "https://opendev.org"
+cached_git_repo_namespace: "openstack"
+cached_git_repos:
+  - name: cinder
+  - name: glance
+  - name: keystone
+  - name: neutron
+  - name: neutron-lib
+  - name: nova
+  - name: novnc
+    url_base: "https://github.com"
+    namespace: novnc
+  - name: openstacksdk
+  - name: os-test-images
+  - name: os-traits
+  - name: os-vif
+  - name: osc-placement
+  - name: oslo.messaging
+  - name: placement
+  - name: python-neutronclient
+  - name: python-novaclient
+  - name: requirements
+  - name: tempest
+  - name: whitebox-tempest-plugin

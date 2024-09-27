@@ -9,6 +9,8 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
   config.vm.provider :libvirt do |libvirt|
     libvirt.cpus = 4
     libvirt.memory = 12288
+    # needed for the virtiofs shared folder
+    libvirt.memorybacking :access, :mode => "shared"
     libvirt.nested = true
     libvirt.cpu_mode = "host-passthrough"
     libvirt.machine_virtual_size = 30
@@ -17,9 +19,13 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
   end
 
   config.vm.box = "cloud-image/ubuntu-24.04"
-  config.vm.synced_folder ".", "/vagrant", disabled: true
+  # while this mounts the dir at vagrant up it does not persist the mount
+  # in fstab so the mount is not persisted after reboot.
+  # There is an ansible task to do that instead.
+  config.vm.synced_folder "./tmp", "/vagrant", type: "virtiofs", mount: true
 
   NR_OF_COMPUTES = 1
+
   (1..NR_OF_COMPUTES).each do |compute_id|
 
     config.vm.define "compute#{compute_id}" do |compute|

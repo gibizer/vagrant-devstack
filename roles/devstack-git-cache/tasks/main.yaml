@@ -1,0 +1,54 @@
+---
+- name: Ensure local tmp dir exists
+  delegate_to: localhost
+  run_once: true
+  ansible.builtin.file:
+    path: "tmp"
+    mode: '0755'
+    state: directory
+
+- name: Ensure local gitcache dir exists
+  delegate_to: localhost
+  run_once: true
+  ansible.builtin.file:
+    path: "tmp/gitcache"
+    mode: '0755'
+    state: directory
+
+- name: Ensure git repos are fresh
+  delegate_to: localhost
+  run_once: true
+  vars:
+    url_base: "{{ item.url_base | default(cached_git_repo_base) }}"
+    namespace: "{{ item.namespace | default(cached_git_repo_namespace) }}"
+  ansible.builtin.git: # noqa: latest
+    repo: "{{ url_base }}/{{ namespace }}/{{ item.name }}"
+    dest: "tmp/gitcache/{{ namespace }}/{{ item.name }}.git"
+    clone: true
+    update: true
+  with_items: "{{ cached_git_repos }}"
+
+- name: Ensure that git cache is persistently mounted
+  become: true
+  block:
+    - name: Read virtiofs tag
+      ansible.builtin.shell:
+        cmd: |
+          set -o pipefail
+          mount | grep /vagrant | cut -d ' ' -f1
+        executable: /bin/bash
+      changed_when: true
+      register: virtiofs_tag
+
+    - name: Write the mount to /etc/fstab
+      ansible.posix.mount:
+        path: /vagrant
+        src: "{{ virtiofs_tag.stdout_lines[0] }}"
+        fstype: virtiofs
+        opts: rw
+        state: present
+        boot: true
+
+    - name: Reload systemd
+      ansible.builtin.systemd:
+        daemon_reload: true
