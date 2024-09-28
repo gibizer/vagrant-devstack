@@ -7,8 +7,13 @@
       ssh_access_pub_key: "/home/gibi/.ssh/id_ed25519.pub"
       # NOTE(gibi): enable this if you have devpi-server setup on your
       # hypervisor e.g: https://github.com/LordGaav/docker-devpi
+      # docker run -d -p 3141:3141 -v ~/.config/devpi:/devpi \
+      # --name devpi-server lordgaav/devpi:latest --indexer-backend=null
       # pip_index_url: "http://192.168.121.1:3141/root/pypi/+simple/"
       # pip_trusted_host: "192.168.121.1"
+      # NOTE(gibi): enable if you have apt-cacher-ng on your hypervisor
+      # caching debian packages (allow https tunneling during install)
+      # apt_cache_proxy: "http://192.168.121.1:3142"
     - devstack-sriov
     - devstack-conf
 

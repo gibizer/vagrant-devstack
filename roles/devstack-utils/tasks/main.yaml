@@ -26,16 +26,6 @@
   ansible.builtin.command: virt-customize -v -x --no-network -a "tmp/ubuntu-24.04.img" --root-password password:root
   changed_when: true
 
-- name: Copy ubuntu cloud image into devstack
-  become: true
-  become_user: stack
-  ansible.builtin.copy:
-    src: "tmp/ubuntu-24.04.img"
-    dest: "/tmp/ubuntu-24.04.img"
-    owner: stack
-    group: stack
-    mode: '0644'
-
 - name: Upload ubuntu cloud image to glance
   become: true
   become_user: stack
@@ -51,7 +41,7 @@
         openstack image create \
         --container-format bare \
         --disk-format qcow2 \
-        --file "/tmp/ubuntu-24.04.img" \
+        --file "/vagrant/ubuntu-24.04.img" \
         ubuntu-24.04
       fi
     executable: /bin/bash

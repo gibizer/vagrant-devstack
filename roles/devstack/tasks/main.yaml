@@ -5,7 +5,7 @@
   block:
     - name: Clone devstack repo
       ansible.builtin.git:
-        repo: https://opendev.org/openstack/devstack.git
+        repo: file:///vagrant/gitcache/openstack/devstack.git
         version: master
         dest: "~/devstack"
 

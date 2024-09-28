@@ -1,4 +1,13 @@
 ---
+- name: Set apt caching proxy
+  when: apt_cache_proxy is defined
+  become: true
+  ansible.builtin.copy:
+    content: |
+      Acquire::http { Proxy "{{ apt_cache_proxy }}"; }
+    dest: /etc/apt/apt.conf.d/proxy
+    mode: '0644'
+
 - name: Update apt cache and upgrade packages
   become: true
   ansible.builtin.apt:

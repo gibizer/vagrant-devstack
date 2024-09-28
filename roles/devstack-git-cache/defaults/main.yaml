@@ -23,3 +23,4 @@ cached_git_repos:
   - name: requirements
   - name: tempest
   - name: whitebox-tempest-plugin
+  - name: devstack

@@ -1,4 +1,7 @@
 ---
+- name: Install packages
+  ansible.builtin.include_tasks: packages.yaml
+
 - name: Configure stack user
   ansible.builtin.include_tasks: user.yaml
 
@@ -7,9 +10,6 @@
 
 - name: Enable swap
   ansible.builtin.include_tasks: swap.yaml
-
-- name: Install packages
-  ansible.builtin.include_tasks: packages.yaml
 
 - name: Ensure ipv6 is enabled
   become: true
