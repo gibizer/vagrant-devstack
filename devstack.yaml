@@ -19,6 +19,7 @@
 
 - name: Deploy devstack on controller
   hosts: aios
+  any_errors_fatal: true
   roles:
     - devstack
 
@@ -26,6 +27,8 @@
 # computes come up after controllers
 - name: Deploy devstack on computes
   hosts: computes
+  any_errors_fatal: true
+  serial: 2
   roles:
     - devstack
 

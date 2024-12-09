@@ -22,18 +22,10 @@
 
     # NOTE(gibi): it is a hack to ensure we have two igb NICs in the VM
     - name: Add igb NIC
-      when: "vm_igb_interface.count < 2"
       # NOTE(gibi): Cannot add it live as libvirt fails with not enaough PCI slot
       ansible.builtin.command: virsh attach-interface --type network --source vagrant-libvirt --model igb --config {{ domain }}
       changed_when: true
-      notify:
-        - Restart VM
-
-    - name: Add igb NIC
-      when: "vm_igb_interface.count == 0"
-      # NOTE(gibi): Cannot add it live as libvirt fails with not enaough PCI slot
-      ansible.builtin.command: virsh attach-interface --type network --source vagrant-libvirt --model igb --config {{ domain }}
-      changed_when: true
+      with_sequence: count=8
       notify:
         - Restart VM
 
@@ -111,7 +103,7 @@
   ansible.builtin.copy:
     dest: /etc/modprobe.d/igb.conf
     content: |
-      options igb max_vfs=4
+      options igb max_vfs=6
     owner: root
     group: root
     mode: '0644'

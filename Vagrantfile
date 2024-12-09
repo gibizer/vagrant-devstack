@@ -16,6 +16,7 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
     libvirt.machine_virtual_size = 30
     libvirt.default_prefix = "devstack-"
     libvirt.machine_type = "q35"
+    libvirt.video_type = "virtio"
   end
 
   config.vm.box = "cloud-image/ubuntu-24.04"
