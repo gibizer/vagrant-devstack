@@ -130,5 +130,12 @@
     group: root
     mode: '0600'
 
+- name: Force NUMA node on PFs and VFs
+  become: true
+  ansible.builtin.copy:
+    dest: "/etc/sysfs.conf"
+    src: "{{ sysfs_conf }}"
+    mode: '0644'
+
 - name: Flush handlers
   ansible.builtin.meta: flush_handlers

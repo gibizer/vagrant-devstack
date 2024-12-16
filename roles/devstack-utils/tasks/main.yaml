@@ -59,7 +59,7 @@
       then
         exit 0
       else
-        openstack flavor create --vcpus 1 --ram 2048 --disk 4 --property "pci_passthrough:alias"="nic:1" m1.pci1
+        openstack flavor create --vcpus 1 --ram 2048 --disk 4 --property "pci_passthrough:alias"="nic-vf:1" m1.vf1
       fi
     executable: /bin/bash
   changed_when: true

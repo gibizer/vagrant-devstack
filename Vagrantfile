@@ -9,6 +9,10 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
   config.vm.provider :libvirt do |libvirt|
     libvirt.cpus = 4
     libvirt.memory = 12288
+    libvirt.numa_nodes = [
+      {:cpus => "0-1", :memory => "6144"},
+      {:cpus => "2-3", :memory => "6144"}
+    ]
     # needed for the virtiofs shared folder
     libvirt.memorybacking :access, :mode => "shared"
     libvirt.nested = true
@@ -35,6 +39,10 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
       compute.vm.provider :libvirt do |domain|
         domain.memory = 6144  # to fit two ubuntu guests
         domain.cpus = 2
+        domain.numa_nodes = [
+          {:cpus => "0-0", :memory => "3072"},
+          {:cpus => "1-1", :memory => "3072"}
+        ]
       end
     end
   end
@@ -51,9 +59,15 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
       ansible.verbose = "vv"
       ansible.groups = {
         "aios" => ["aio"],
-        "aios:vars" => {"devstack_local_conf" => "local.conf"},
+        "aios:vars" => {
+          "devstack_local_conf" => "local.conf",
+          "sysfs_conf" => "sysfs.conf",
+        },
         "computes" => ["compute[1:#{NR_OF_COMPUTES}]"],
-        "computes:vars" => {"devstack_local_conf" => "compute_local.conf"},
+        "computes:vars" => {
+          "devstack_local_conf" => "compute_local.conf",
+          "sysfs_conf" => "sysfs.conf",
+        },
       }
     end
   end
