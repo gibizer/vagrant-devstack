@@ -1,6 +1,8 @@
 ---
 - name: Prepare infra
   hosts: all
+  any_errors_fatal: true
+  serial: 2
   roles:
     - devstack-git-cache
     - role: devstack-infra
