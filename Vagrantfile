@@ -33,7 +33,7 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
       compute.vm.host_name = "compute#{compute_id}"
 
       compute.vm.provider :libvirt do |domain|
-        domain.memory = 4096
+        domain.memory = 6144  # to fit two ubuntu guests
         domain.cpus = 2
       end
     end
