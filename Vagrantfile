@@ -44,6 +44,7 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
 
     # HACK: Only run ansible once and after all the machines are up
     aio.vm.provision "ansible" do |ansible|
+      ansible.galaxy_role_file = 'requirements.yaml'
       ansible.compatibility_mode = "2.0"
       ansible.playbook = "devstack.yaml"
       ansible.limit = "all" # run ansible in parallel for all machines
