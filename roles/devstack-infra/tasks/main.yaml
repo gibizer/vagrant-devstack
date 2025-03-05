@@ -25,6 +25,24 @@
     bridge: br-test
     state: present
 
+- name: Ensure br-physnet2 for connecting SRIOV PF to OVS
+  become: true
+  openvswitch.openvswitch.openvswitch_bridge:
+    bridge: br-physnet2
+    state: present
+
+- name: Add enp6s0 to br-physnet2
+  become: true
+  openvswitch.openvswitch.openvswitch_port:
+    bridge: br-physnet2
+    port: enp6s0
+    state: present
+
+- name: Make br-physnet2 up
+  ansible.builtin.shell:
+    cmd: ip link set dev br-physnet2 up
+  become: true
+
 - name: Create /etc/pip.conf
   become: true
   when: pip_index_url is defined
