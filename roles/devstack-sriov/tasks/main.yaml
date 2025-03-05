@@ -119,8 +119,6 @@
         version: 2
         renderer: networkd
         ethernets:
-          enp5s0:
-            dhcp4: true
           enp6s0:
             dhcp4: true
   ansible.builtin.copy:
