@@ -17,6 +17,7 @@ cached_git_repos:
   - name: os-vif
   - name: osc-placement
   - name: oslo.messaging
+  - name: oslo.service
   - name: placement
   - name: python-neutronclient
   - name: python-novaclient
