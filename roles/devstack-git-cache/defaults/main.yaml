@@ -18,6 +18,7 @@ cached_git_repos:
   - name: osc-placement
   - name: oslo.messaging
   - name: oslo.service
+  - name: oslo.config
   - name: placement
   - name: python-neutronclient
   - name: python-novaclient
