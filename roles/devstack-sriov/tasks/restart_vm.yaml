@@ -15,4 +15,4 @@
 - name: Wait for VM to start
   ansible.builtin.wait_for_connection:
     delay: 5
-    timeout: 30
+    timeout: 120
