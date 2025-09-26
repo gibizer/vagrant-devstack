@@ -26,7 +26,21 @@
     dest: "tmp/gitcache/{{ namespace }}/{{ item.name }}.git"
     clone: true
     update: true
+  async: 600
+  poll: 0
   with_items: "{{ cached_git_repos }}"
+  register: async_result
+
+- name: Wait for async git clones to finish
+  delegate_to: localhost
+  run_once: true
+  ansible.builtin.async_status:
+    jid: "{{ item.ansible_job_id }}"
+  register: job_status
+  until: job_status.finished
+  with_items: "{{ async_result.results }}"
+  retries: 600
+  delay: 1
 
 - name: Ensure that git cache is persistently mounted
   become: true
