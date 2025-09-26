@@ -1,0 +1,3 @@
+---
+devstack_git_url: "file:///vagrant/gitcache/openstack/devstack.git"
+devstack_git_ref: "master"

@@ -5,8 +5,9 @@
   block:
     - name: Clone devstack repo
       ansible.builtin.git:
-        repo: file:///vagrant/gitcache/openstack/devstack.git
-        version: master
+        repo: "{{ devstack_git_url }}"
+        refspec: "{{ devstack_git_ref }}"
+        version: "FETCH_HEAD"
         dest: "~/devstack"
 
     - name: Copy local.conf into devstack dir
