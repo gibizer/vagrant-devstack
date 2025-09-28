@@ -6,7 +6,6 @@
   roles:
     - devstack-git-cache
     - role: devstack-infra
-      ssh_access_pub_key: "/home/gibi/.ssh/id_ed25519.pub"
       # NOTE(gibi): enable this if you have devpi-server setup on your
       # hypervisor e.g: https://github.com/LordGaav/docker-devpi
       # docker run -d -p 3141:3141 -v ~/.config/devpi:/devpi \
