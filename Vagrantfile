@@ -23,7 +23,7 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
     libvirt.video_type = "virtio"
   end
 
-  config.vm.box = "cloud-image/ubuntu-24.04"
+  config.vm.box = "bento/ubuntu-24.04"
   # while this mounts the dir at vagrant up it does not persist the mount
   # in fstab so the mount is not persisted after reboot.
   # There is an ansible task to do that instead.
