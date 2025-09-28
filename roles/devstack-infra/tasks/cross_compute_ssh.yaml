@@ -11,6 +11,7 @@
   community.crypto.openssh_keypair:
     path: "{{ local_tmp_dir }}/id_ed25519"
     type: ed25519
+    force: true
   register: cross_ssh_key
 
 - name: Build hosts file
