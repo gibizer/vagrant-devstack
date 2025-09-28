@@ -1,0 +1,77 @@
+# -*- mode: ruby -*-
+# vi: set ft=ruby :
+
+
+VAGRANTFILE_API_VERSION = "2"
+
+Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
+
+  config.vm.provider :libvirt do |libvirt|
+    libvirt.cpus = 4
+    libvirt.memory = 12288
+    libvirt.numa_nodes = [
+      {:cpus => "0-1", :memory => "6144"},
+      {:cpus => "2-3", :memory => "6144"}
+    ]
+    # needed for the virtiofs shared folder
+    libvirt.memorybacking :access, :mode => "shared"
+    libvirt.nested = true
+    libvirt.cpu_mode = "host-passthrough"
+    libvirt.machine_virtual_size = 30
+    libvirt.default_prefix = "devstack-"
+    libvirt.machine_type = "q35"
+    libvirt.video_type = "virtio"
+  end
+
+  config.vm.box = "bento/ubuntu-24.04"
+  # while this mounts the dir at vagrant up it does not persist the mount
+  # in fstab so the mount is not persisted after reboot.
+  # There is an ansible task to do that instead.
+  config.vm.synced_folder "./tmp", "/vagrant", type: "virtiofs", mount: true
+
+  NR_OF_COMPUTES = 1
+
+  (1..NR_OF_COMPUTES).each do |compute_id|
+
+    config.vm.define "compute#{compute_id}" do |compute|
+      compute.vm.host_name = "compute#{compute_id}"
+
+      compute.vm.provider :libvirt do |domain|
+        domain.memory = 6144  # to fit two ubuntu guests
+        domain.cpus = 2
+        domain.numa_nodes = [
+          {:cpus => "0-0", :memory => "3072"},
+          {:cpus => "1-1", :memory => "3072"}
+        ]
+      end
+    end
+  end
+
+  config.vm.define "aio" do |aio|
+    aio.vm.host_name = "aio"
+
+    # HACK: Only run ansible once and after all the machines are up
+    aio.vm.provision "ansible" do |ansible|
+      ansible.galaxy_role_file = '../../requirements.yaml'
+      ansible.galaxy_roles_path = '../../roles/'
+      ansible.compatibility_mode = "2.0"
+      ansible.playbook = "playbook.yaml"
+      ansible.limit = "all" # run ansible in parallel for all machines
+      ansible.verbose = "vv"
+      ansible.groups = {
+        "aios" => ["aio"],
+        "aios:vars" => {
+          "devstack_local_conf" => "local.conf",
+          "sysfs_conf" => "sysfs.conf",
+        },
+        "computes" => ["compute[1:#{NR_OF_COMPUTES}]"],
+        "computes:vars" => {
+          "devstack_local_conf" => "compute_local.conf",
+          "sysfs_conf" => "sysfs.conf",
+        },
+      }
+    end
+  end
+
+end
+

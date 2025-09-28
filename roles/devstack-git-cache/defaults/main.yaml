@@ -26,3 +26,5 @@ cached_git_repos:
   - name: tempest
   - name: whitebox-tempest-plugin
   - name: devstack
+  - name: rally
+  - name: rally-openstack
