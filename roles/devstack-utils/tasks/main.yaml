@@ -1,5 +1,6 @@
 ---
 - name: Run discover hosts to pick up additional computes
+  when: discover_hosts
   ansible.builtin.shell:
     cmd: |
       nova-manage cell_v2 discover_hosts
@@ -12,43 +13,48 @@
     mode: '0755'
     state: directory
 
-- name: Download ubuntu cloud image
-  delegate_to: localhost
-  ansible.builtin.get_url:
-    url: https://cloud-images.ubuntu.com/noble/current/noble-server-cloudimg-amd64.img
-    dest: "tmp/ubuntu-24.04.img"
-    mode: '0644'
-  register: downloaded
-
-- name: Inject root password
-  delegate_to: localhost
-  when: "downloaded.changed" # noqa: no-handler
-  ansible.builtin.command: virt-customize -v -x --no-network -a "tmp/ubuntu-24.04.img" --root-password password:root
-  changed_when: true
-
 - name: Upload ubuntu cloud image to glance
-  become: true
-  become_user: stack
-  ansible.builtin.shell:
-    cmd: |
-      set -o pipefail
-      . /home/stack/devstack/openrc admin admin
-      set -x pipefail
-      if openstack image list | grep ubuntu
-      then
-        exit 0
-      else
-        openstack image create \
-        --container-format bare \
-        --disk-format qcow2 \
-        --file "/vagrant/ubuntu-24.04.img" \
-        ubuntu-24.04
-      fi
-    executable: /bin/bash
-  changed_when: true
+  delegate_to: localhost
+  when: upload_ubuntu_cloud_image_to_glane
+  block:
 
+  - name: Download ubuntu cloud image
+    delegate_to: localhost
+    ansible.builtin.get_url:
+      url: https://cloud-images.ubuntu.com/noble/current/noble-server-cloudimg-amd64.img
+      dest: "tmp/ubuntu-24.04.img"
+      mode: '0644'
+    register: downloaded
+
+  - name: Inject root password
+    delegate_to: localhost
+    when: "downloaded.changed" # noqa: no-handler
+    ansible.builtin.command: virt-customize -v -x --no-network -a "tmp/ubuntu-24.04.img" --root-password password:root
+    changed_when: true
+
+  - name: Upload ubuntu cloud image to glance
+    become: true
+    become_user: stack
+    ansible.builtin.shell:
+      cmd: |
+        set -o pipefail
+        . /home/stack/devstack/openrc admin admin
+        set -x pipefail
+        if openstack image list | grep ubuntu
+        then
+          exit 0
+        else
+          openstack image create \
+          --container-format bare \
+          --disk-format qcow2 \
+          --file "/vagrant/ubuntu-24.04.img" \
+          ubuntu-24.04
+        fi
+      executable: /bin/bash
+    changed_when: true
 
 - name: Create PCI passthrough flavor
+  when: create_falvors_and_ports
   become: true
   become_user: stack
   ansible.builtin.shell:
@@ -65,6 +71,7 @@
   changed_when: true
 
 - name: Create direct port
+  when: create_falvors_and_ports
   become: true
   become_user: stack
   ansible.builtin.shell:
@@ -102,4 +109,5 @@
   changed_when: true
 
 - name: Configure whitebox tempest plugin
+  when: install_whitebox
   ansible.builtin.include_tasks: whitebox.yaml

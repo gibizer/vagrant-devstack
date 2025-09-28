@@ -1,0 +1,5 @@
+---
+discover_hosts: true
+upload_ubuntu_cloud_image_to_glane: false
+create_falvors_and_ports: false
+install_whitebox: false
