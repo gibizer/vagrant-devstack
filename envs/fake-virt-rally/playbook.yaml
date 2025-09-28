@@ -39,7 +39,7 @@
 - name: Post deploy setups
   hosts: aios
   roles:
-    - roles: devstack-utils
+    - role: devstack-utils
       upload_ubuntu_cloud_image_to_glane: false
       create_falvors_and_ports: false
       install_whitebox: false

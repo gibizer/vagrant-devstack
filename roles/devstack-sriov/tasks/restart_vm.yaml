@@ -5,7 +5,7 @@
 
 - name: Wait for shutdown
   ansible.builtin.pause:
-    seconds: 5
+    seconds: 15
 
 - name: Start VM
   delegate_to: localhost
