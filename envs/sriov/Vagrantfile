@@ -29,7 +29,7 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
   # There is an ansible task to do that instead.
   config.vm.synced_folder "./tmp", "/vagrant", type: "virtiofs", mount: true
 
-  NR_OF_COMPUTES = 1
+  NR_OF_COMPUTES = 0
 
   (1..NR_OF_COMPUTES).each do |compute_id|
 
@@ -52,9 +52,10 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
 
     # HACK: Only run ansible once and after all the machines are up
     aio.vm.provision "ansible" do |ansible|
-      ansible.galaxy_role_file = 'requirements.yaml'
+      ansible.galaxy_role_file = '../../requirements.yaml'
+      ansible.galaxy_roles_path = '../../roles/'
       ansible.compatibility_mode = "2.0"
-      ansible.playbook = "devstack.yaml"
+      ansible.playbook = "playbook.yaml"
       ansible.limit = "all" # run ansible in parallel for all machines
       ansible.verbose = "vv"
       ansible.groups = {
