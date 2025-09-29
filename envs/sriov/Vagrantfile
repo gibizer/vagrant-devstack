@@ -29,7 +29,7 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
   # There is an ansible task to do that instead.
   config.vm.synced_folder "./tmp", "/vagrant", type: "virtiofs", mount: true
 
-  NR_OF_COMPUTES = 0
+  NR_OF_COMPUTES = 1
 
   (1..NR_OF_COMPUTES).each do |compute_id|
 

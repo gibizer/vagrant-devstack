@@ -14,7 +14,6 @@
     state: directory
 
 - name: Upload ubuntu cloud image to glance
-  delegate_to: localhost
   when: upload_ubuntu_cloud_image_to_glane
   block:
 
