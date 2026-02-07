@@ -21,6 +21,10 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
     libvirt.default_prefix = "devstack-"
     libvirt.machine_type = "q35"
     libvirt.video_type = "virtio"
+
+    libvirt.disk_driver :cache => "unsafe", :discard => "unmap"
+    libvirt.disk_bus = "scsi"
+
   end
 
   config.vm.box = "bento/ubuntu-24.04"
