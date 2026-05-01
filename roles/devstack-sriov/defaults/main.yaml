@@ -1,2 +1,3 @@
 ---
 sysfs_conf: "sysfs.conf"
+domain_prefix: "devstack"

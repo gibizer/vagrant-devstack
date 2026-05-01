@@ -27,3 +27,11 @@
     name: "{{ item }}"
     state: "present"
   with_items: "{{ packages_absent }}"
+
+  # Ubuntu 26.04 uses sudo-rs and it does
+  # not support devstack's requiretty usage
+- name: Use legacy sudo if sudo-rs is the default
+  become: true
+  ansible.builtin.command: update-alternatives --set sudo /usr/bin/sudo.ws
+  # just move on if this distro has no alternatives
+  ignore_errors: True

@@ -3,7 +3,7 @@
 - name: Define domain
   ansible.builtin.set_fact:
     # NOTE(gibi): The Vagrantfile defines a devstack prefix for each VM
-    domain: devstack-{{ ansible_hostname }}
+    domain: "{{ domain_prefix }}-{{ ansible_hostname }}"
 
 - name: Add igb NIC to the VM definition
   delegate_to: localhost
